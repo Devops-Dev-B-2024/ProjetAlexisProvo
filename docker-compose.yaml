@@ -1,0 +1,7 @@
+services:
+  music-matcher:
+    image: impbh/music-matcher:latest
+    container_name: music-matcher
+    env_file: .env
+    ports:
+      - 3000:3000
