@@ -2,6 +2,7 @@ import * as errors from '../../errors/errorCreator';
 import artists from '../artists/artists';
 import users from '../users/users';
 import dislikedArtistsService from './dislikedArtists';
+import likedArtistsService from '../likedArtists/likedArtists';
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 
 const throwErrorSpy = jest.spyOn(errors, 'throwError');
@@ -75,17 +76,19 @@ describe('Disliked artists service', () => {
     });
 
     it('should delete like', async () => {
+      const existingLike = {
+        id: 1,
+        idArtist: newDislike.idArtist,
+        idUser: newDislike.idUser,
+      };
+
       const getArtistByIdSpy = jest
         .spyOn(artists, 'getArtistById')
         .mockResolvedValue(artist1);
 
       const isLikeExistingSpy = jest
         .spyOn(dislikedArtistsService, 'isLikeExisting')
-        .mockResolvedValue({
-          id: 1,
-          idArtist: newDislike.idArtist,
-          idUser: newDislike.idUser,
-        });
+        .mockResolvedValue(existingLike);
 
       const isDislikeExistingSpy = jest
         .spyOn(dislikedArtistsService, 'isDislikeExisting')
@@ -99,11 +102,16 @@ describe('Disliked artists service', () => {
           idUser: newDislike.idUser,
         });
 
+      const deleteLikeSpy = jest
+        .spyOn(likedArtistsService, 'deleteLike')
+        .mockResolvedValue(existingLike);
+
       const addedLike = await dislikedArtistsService.addDislike(newDislike);
 
       expect(getArtistByIdSpy).toHaveBeenCalledWith(newDislike.idArtist);
       expect(isLikeExistingSpy).toHaveBeenCalledWith(newDislike);
       expect(isDislikeExistingSpy).toHaveBeenCalledWith(newDislike);
+      expect(deleteLikeSpy).toHaveBeenCalledWith(existingLike.id);
       expect(addDislikeQuerySpy).toHaveBeenCalledWith(newDislike);
       expect(addedLike).toStrictEqual({
         id: 1,
