@@ -7,7 +7,7 @@
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint --fix \"src/**/*.ts\"",
     "start": "ts-node src/server.ts",
-    "start:initdb": "npm run generate && npm run push && nrpm run start",
+    "start:initdb": "npm run generate && npm run push && npm run start",
     "start:initdb-populate": "npm run generate && npm run push && npm run populate && npm run start",
     "build": "tsc",
     "serve": "node dist/index.js",
