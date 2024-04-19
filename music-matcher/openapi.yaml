@@ -1,0 +1,908 @@
+openapi: 3.0.1
+info:
+  description: 'API Music Matcher'
+  version: '1'
+  title: 'API Music Matcher'
+servers:
+  - url: 'http://localhost:3000'
+tags:
+  - name: 'authentication'
+    description: 'Everything about authentication'
+  - name: 'users'
+    description: 'Everything about users'
+  - name: 'artists'
+    description: 'Everything about artists'
+  - name: 'liked_artists'
+    description: 'Everything about liked artists'
+  - name: 'disliked_artists'
+    description: 'Everything about disliked artists'
+  - name: 'recommendations'
+    description: 'Everything about recommendations'
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - 'authentication'
+      summary: 'Create a new user'
+      description: 'Create a new user'
+      operationId: 'register'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/register'
+      responses:
+        '201':
+          description: 'User created successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user'
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+  /auth/login:
+    post:
+      tags:
+        - 'authentication'
+      summary: 'Login'
+      description: 'Login'
+      operationId: 'login'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/login'
+      responses:
+        '200':
+          description: 'User created successfully'
+          content:
+            application/json:
+              schema:
+                type: 'object'
+                properties:
+                  user:
+                    $ref: '#/components/schemas/user'
+                  token:
+                    type: 'string'
+                    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTcwMTY3NzU3MiwiZXhwIjoxNzAxNjgxMTcyfQ.NzOvoiy_LN8doxeA8dmBwuRDXFKmIs93Mg2Rk64env8'
+                required:
+                  - user
+                  - token
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+
+  /users:
+    get:
+      tags:
+        - 'users'
+      summary: 'Retrieve all users'
+      description: 'Retrieve all users, only admins can access this ressource'
+      operationId: 'getUsers'
+      responses:
+        '200':
+          $ref: '#/components/responses/usersList'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+
+  /users/{id}:
+    get:
+      tags:
+        - 'users'
+      summary: 'Retrieve a user by ID'
+      description: 'Retrieve a user by ID, only admins and corresponding user can access this ressource'
+      operationId: 'getUserById'
+      parameters:
+        - name: 'id'
+          in: 'path'
+          required: true
+          description: 'ID of the user to retrieve'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          description: 'User retrieved successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+    patch:
+      tags:
+        - 'users'
+      summary: 'Update a user by ID'
+      description: 'Update a user by ID, only admins and corresponding user can modify this ressource. Only admins can modify the role'
+      operationId: 'updateUserById'
+      parameters:
+        - name: 'id'
+          in: 'path'
+          required: true
+          description: 'ID of the user to update'
+          schema:
+            type: 'number'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/updateUser'
+      responses:
+        '200':
+          description: 'User updated successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+    delete:
+      tags:
+        - 'users'
+      summary: 'Delete a user by ID'
+      description: 'Delete a user by ID, only admins and corresponding user can delete this ressource'
+      operationId: 'deleteUserById'
+      parameters:
+        - name: 'id'
+          in: 'path'
+          required: true
+          description: 'ID of the user to delete'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          description: 'User deleted successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+
+  /artists:
+    get:
+      tags:
+        - 'artists'
+      summary: 'Retrieve all artists'
+      description: 'Retrieve all artists, you need to be authentified to access this ressource'
+      operationId: 'getArtists'
+      responses:
+        '200':
+          $ref: '#/components/responses/artistsList'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+    post:
+      tags:
+        - 'artists'
+      summary: 'Add a new artist to the DB from the Deezer API'
+      description: 'Add a new artist to the DB from the Deezer API, you need to be authentified to add an artist to the database'
+      operationId: 'addArtist'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/addArtist'
+      responses:
+        '201':
+          description: 'Artist added successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/artist'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+
+  /artists/{id}:
+    get:
+      tags:
+        - 'artists'
+      summary: 'Retrieve an artist by its ID'
+      description: 'Retrieve an artist by its ID, you need to be authentified to access this ressource'
+      operationId: 'getArtistById'
+      parameters:
+        - name: 'id'
+          in: 'path'
+          required: true
+          description: 'ID of the artist to delete'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          description: 'Artist retrieved successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/artist'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+    delete:
+      tags:
+        - 'artists'
+      summary: 'Delete an artist by ID'
+      description: 'Delete an artist by ID, only admins can delete an artist'
+      operationId: 'deleteArtistById'
+      parameters:
+        - name: 'id'
+          in: 'path'
+          required: true
+          description: 'ID of the artist to delete'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          description: 'Artist deleted successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/artist'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+    patch:
+      tags:
+        - 'artists'
+      summary: 'Update an artist by its ID'
+      description: 'Update a user by its ID, only admins can update an artist'
+      operationId: 'updateArtistById'
+      parameters:
+        - name: 'id'
+          in: 'path'
+          required: true
+          description: 'ID of the artist to update'
+          schema:
+            type: 'number'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/updateArtist'
+      responses:
+        '200':
+          description: 'User updated successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/artist'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+
+  /liked_artists:
+    get:
+      tags:
+        - 'liked_artists'
+      summary: 'Retrieve all liked artists'
+      description: 'Retrieve all liked artists, only admins can access this ressource'
+      operationId: 'getLikedArtists'
+      responses:
+        '200':
+          $ref: '#/components/responses/likedArtistList'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+    post:
+      tags:
+        - 'liked_artists'
+      summary: 'Add a like on an artist'
+      description: 'Add a like on an artist, you need to be authentified to add a like on an artist'
+      operationId: 'likeArtist'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/likeArtist'
+      responses:
+        '201':
+          description: 'Like added successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/likedArtist'
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+  /liked_artists/{likeId}:
+    get:
+      tags:
+        - 'liked_artists'
+      summary: 'Retrieve a like by its id'
+      description: 'Retrieve a like by its id, only admins and like owner can access this ressource'
+      operationId: 'getLikeById'
+      parameters:
+        - name: 'likeId'
+          in: 'path'
+          required: true
+          description: 'ID of the like'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          description: 'Like retrieved successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/likedArtist'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+    delete:
+      tags:
+        - 'liked_artists'
+      summary: 'Delete a like by ID'
+      description: 'Delete a like by ID, only admins and like owner can delete this ressource'
+      operationId: 'deleteLikeById'
+      parameters:
+        - name: 'likeId'
+          in: 'path'
+          required: true
+          description: 'ID of the like to delete'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          description: 'Like deleted successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/likedArtist'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+
+  /liked_artists/artists/{artistId}:
+    get:
+      tags:
+        - 'liked_artists'
+      summary: 'Retrieve all likes for an artist'
+      description: 'Retrieve all likes for an artist, only admins can access this ressource'
+      operationId: 'getLikesByArtist'
+      parameters:
+        - name: 'artistId'
+          in: 'path'
+          required: true
+          description: 'ID of the artist'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          $ref: '#/components/responses/likedArtistList'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+  /liked_artists/users/{userId}:
+    get:
+      tags:
+        - 'liked_artists'
+      summary: 'Retrieve all likes for an user'
+      description: 'Retrieve all likes for an user, only admins and corresponding user can access this ressource'
+      operationId: 'getLikedArtistsByUser'
+      parameters:
+        - name: 'userId'
+          in: 'path'
+          required: true
+          description: 'ID of the user'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          $ref: '#/components/responses/likedArtistList'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+
+  /disliked_artists:
+    get:
+      tags:
+        - 'disliked_artists'
+      summary: 'Retrieve all disliked artists'
+      description: 'Retrieve all disliked artists, only admins can access this ressource'
+      operationId: 'getDislikedArtists'
+      responses:
+        '200':
+          $ref: '#/components/responses/likedArtistList'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+    post:
+      tags:
+        - 'disliked_artists'
+      summary: 'Add a dislike on an artist'
+      description: 'Add a dislike on an artist, you need to be authentified to add a dislike on an artist'
+      operationId: 'dislikeArtist'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/likeArtist'
+      responses:
+        '201':
+          description: 'Dislike added successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/likedArtist'
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+  /disliked_artists/{dislikeId}:
+    get:
+      tags:
+        - 'disliked_artists'
+      summary: 'Retrieve a dislike by its id'
+      description: 'Retrieve a dislike by its id, only admins and dislike owner can access this ressource'
+      operationId: 'getDislikeById'
+      parameters:
+        - name: 'dislikeId'
+          in: 'path'
+          required: true
+          description: 'ID of the dislike'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          description: 'Dislike retrieved successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/likedArtist'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+    delete:
+      tags:
+        - 'disliked_artists'
+      summary: 'Delete a dislike by ID'
+      description: 'Delete a dislike by ID, only admins and dislike owner can delete this ressource'
+      operationId: 'deleteDislikeById'
+      parameters:
+        - name: 'dislikeId'
+          in: 'path'
+          required: true
+          description: 'ID of the dislike to delete'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          description: 'Dislike deleted successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/likedArtist'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+
+  /disliked_artists/artists/{artistId}:
+    get:
+      tags:
+        - 'disliked_artists'
+      summary: 'Retrieve all dislikes for an artist'
+      description: 'Retrieve all dislikes for an artist, only admins can access this ressource'
+      operationId: 'getDislikesByArtist'
+      parameters:
+        - name: 'artistId'
+          in: 'path'
+          required: true
+          description: 'ID of the artist'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          $ref: '#/components/responses/likedArtistList'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+  /disliked_artists/users/{userId}:
+    get:
+      tags:
+        - 'disliked_artists'
+      summary: 'Retrieve all dislikes for an user'
+      description: 'Retrieve all dislikes for an user, only admins and corresponding user can access this ressource'
+      operationId: 'getDislikedArtistsByUser'
+      parameters:
+        - name: 'userId'
+          in: 'path'
+          required: true
+          description: 'ID of the user'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          $ref: '#/components/responses/likedArtistList'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+
+  /recommendations/users/{userId}:
+    get:
+      tags:
+        - 'recommendations'
+      summary: 'Retrieve a recommendation for an user'
+      description: 'Retrieve a recommendation for an user, only admins and corresponding user can access this ressource'
+      operationId: 'getUserRecommendation'
+      parameters:
+        - name: 'userId'
+          in: 'path'
+          required: true
+          description: 'ID of the user'
+          schema:
+            type: 'number'
+      responses:
+        '200':
+          description: 'Recommendation retrieved successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/artist'
+        '401':
+          $ref: '#/components/responses/authenticationFailed'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+
+components:
+  schemas:
+    user:
+      type: 'object'
+      properties:
+        id:
+          type: 'number'
+          example: 1
+        name:
+          type: 'string'
+          example: 'John Doe'
+        email:
+          type: 'string'
+          example: 'john.doe@gmail.com'
+        role:
+          type: 'string'
+          enum: ['user', 'admin']
+      required:
+        - id
+        - name
+        - email
+        - role
+    updateUser:
+      type: 'object'
+      properties:
+        name:
+          type: 'string'
+          example: 'John Doe'
+        email:
+          type: 'string'
+          example: 'john.doe@gmail.com'
+        role:
+          type: 'string'
+          enum: ['user', 'admin']
+    register:
+      type: 'object'
+      properties:
+        name:
+          type: 'string'
+          example: 'John Doe'
+        email:
+          type: 'string'
+          example: 'john.doe@gmail.com'
+        password:
+          type: 'string'
+          example: 'P4ssw0rd!'
+      required:
+        - name
+        - email
+        - password
+    login:
+      type: 'object'
+      properties:
+        email:
+          type: 'string'
+          example: 'john.doe@gmail.com'
+        password:
+          type: 'string'
+          example: 'P4ssw0rd!'
+      required:
+        - email
+        - password
+    artist:
+      type: 'object'
+      properties:
+        id:
+          type: 'number'
+          example: 27
+        name:
+          type: 'string'
+          example: 'Daft Punk'
+        link:
+          type: 'string'
+          example: 'https://www.deezer.com/artist/27'
+        picture:
+          type: 'string'
+          example: 'https://api.deezer.com/artist/27/image'
+        picture_small:
+          type: 'string'
+          example: 'https://e-cdns-images.dzcdn.net/images/artist/f2bc007e9133c946ac3c3907ddc5d2ea/56x56-000000-80-0-0.jpg'
+        picture_medium:
+          type: 'string'
+          example: 'https://e-cdns-images.dzcdn.net/images/artist/f2bc007e9133c946ac3c3907ddc5d2ea/250x250-000000-80-0-0.jpg'
+        picture_big:
+          type: 'string'
+          example: 'https://e-cdns-images.dzcdn.net/images/artist/f2bc007e9133c946ac3c3907ddc5d2ea/500x500-000000-80-0-0.jpg'
+        picture_xl:
+          type: 'string'
+          example: 'https://e-cdns-images.dzcdn.net/images/artist/f2bc007e9133c946ac3c3907ddc5d2ea/1000x1000-000000-80-0-0.jpg'
+        nb_album:
+          type: 'number'
+          example: 38
+        nb_fan:
+          type: 'number'
+          example: 4531210
+        radio:
+          type: 'boolean'
+          example: true
+        tracklist:
+          type: 'string'
+          example: 'https://api.deezer.com/artist/27/top?limit=50'
+        type:
+          type: 'string'
+          example: 'artist'
+      required:
+        - id
+        - name
+        - link
+        - picture
+        - picture_small
+        - picture_medium
+        - picture_big
+        - picture_xl
+        - nb_album
+        - nb_fan
+        - radio
+        - tracklist
+        - type
+    updateArtist:
+      type: 'object'
+      properties:
+        name:
+          type: 'string'
+          example: 'Daft Punk'
+        link:
+          type: 'string'
+          example: 'https://www.deezer.com/artist/27'
+        picture:
+          type: 'string'
+          example: 'https://api.deezer.com/artist/27/image'
+        picture_small:
+          type: 'string'
+          example: 'https://e-cdns-images.dzcdn.net/images/artist/f2bc007e9133c946ac3c3907ddc5d2ea/56x56-000000-80-0-0.jpg'
+        picture_medium:
+          type: 'string'
+          example: 'https://e-cdns-images.dzcdn.net/images/artist/f2bc007e9133c946ac3c3907ddc5d2ea/250x250-000000-80-0-0.jpg'
+        picture_big:
+          type: 'string'
+          example: 'https://e-cdns-images.dzcdn.net/images/artist/f2bc007e9133c946ac3c3907ddc5d2ea/500x500-000000-80-0-0.jpg'
+        picture_xl:
+          type: 'string'
+          example: 'https://e-cdns-images.dzcdn.net/images/artist/f2bc007e9133c946ac3c3907ddc5d2ea/1000x1000-000000-80-0-0.jpg'
+        nb_album:
+          type: 'number'
+          example: 38
+        nb_fan:
+          type: 'number'
+          example: 4531210
+        radio:
+          type: 'boolean'
+          example: true
+        tracklist:
+          type: 'string'
+          example: 'https://api.deezer.com/artist/27/top?limit=50'
+        type:
+          type: 'string'
+          example: 'artist'
+    addArtist:
+      type: 'object'
+      properties:
+        deezer_id:
+          type: 'number'
+          example: 27
+      required:
+        - deezer_id
+    likedArtist:
+      type: 'object'
+      properties:
+        id:
+          type: 'number'
+          example: 1
+        id_artist:
+          type: 'number'
+          example: 2
+        id_user:
+          type: 'number'
+          example: 3
+      required:
+        - id
+        - id_artist
+        - id_user
+    likeArtist:
+      type: 'object'
+      properties:
+        id_artist:
+          type: 'number'
+          example: 2
+      required:
+        - id_artist
+  responses:
+    usersList:
+      description: 'An array of all users'
+      content:
+        application/json:
+          schema:
+            type: 'array'
+            items:
+              $ref: '#/components/schemas/user'
+    notFound:
+      description: 'Not Found'
+      content:
+        application/json:
+          schema:
+            type: 'object'
+            properties:
+              message:
+                type: 'string'
+                example: 'Ressource not found'
+    badRequest:
+      description: 'Bad Request'
+      content:
+        application/json:
+          schema:
+            type: 'object'
+            properties:
+              message:
+                type: 'string'
+                example: 'The reason why request failed'
+    internalServerError:
+      description: 'Internal Server Error'
+      content:
+        application/json:
+          schema:
+            type: 'object'
+            properties:
+              message:
+                type: 'string'
+                example: 'Internal server error, please try again later'
+    artistsList:
+      description: 'An array of all artists'
+      content:
+        application/json:
+          schema:
+            type: 'array'
+            items:
+              $ref: '#/components/schemas/artist'
+    likedArtistList:
+      description: 'An array of all likes'
+      content:
+        application/json:
+          schema:
+            type: 'array'
+            items:
+              $ref: '#/components/schemas/likedArtist'
+    authenticationFailed:
+      description: 'Authentication failed'
+      content:
+        application/json:
+          schema:
+            type: 'object'
+            properties:
+              message:
+                type: 'string'
+                example: 'Authentication failed'
+    forbidden:
+      description: 'Access forbidden'
+      content:
+        application/json:
+          schema:
+            type: 'object'
+            properties:
+              message:
+                type: 'string'
+                example: 'Access forbidden'
