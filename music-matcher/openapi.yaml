@@ -20,6 +20,17 @@ tags:
     description: 'Everything about recommendations'
 
 paths:
+  /version:
+    get:
+      tags:
+        - 'version'
+      summary: 'Get server version'
+      description: 'Get server version'
+      operationId: 'version'
+      responses:
+        '200':
+          $ref: '#/components/responses/version'
+          
   /auth/register:
     post:
       tags:
@@ -832,6 +843,16 @@ components:
       required:
         - id_artist
   responses:
+    version:
+      description: 'Server version'
+      content:
+        application/json:
+          schema:
+            type: 'object'
+            properties:
+              version:
+                type: 'string'
+                example: "1.0.0"
     usersList:
       description: 'An array of all users'
       content:
