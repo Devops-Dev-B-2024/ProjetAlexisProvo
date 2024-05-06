@@ -15,7 +15,8 @@ const getAllArtists = async () => {
 const addArtist = async (deezerId: number) => {
   const existingArtist = await thisModule.getArtistById(deezerId);
   if (existingArtist) {
-    throwError(400, 'This artist is already in the database');
+    throwError(400,
+      'This artist is already in the database');
   }
   const artist = await deezer.getArtistById(deezerId);
   const addedArtist = await db.insert(artists).values(artist).returning();
