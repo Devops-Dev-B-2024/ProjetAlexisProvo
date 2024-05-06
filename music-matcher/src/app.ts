@@ -5,6 +5,7 @@ import { router as authRouther } from './routers/authentication/authentication';
 import { router as likedArtistsRouter } from './routers/likedArtists/likedArtists';
 import { router as dislikedArtistsRouter } from './routers/dislikedArtists/dislikedArtists';
 import { router as recommendationsRouter } from './routers/recommendations/recommendations';
+import { router as versionRooter } from './routers/version/version';
 import { errorManager } from './middlewares/error/errorManager';
 import * as OpenApiValidator from 'express-openapi-validator';
 import morgan from 'morgan';
@@ -22,6 +23,7 @@ app.use(
   }),
 );
 app.use(morgan('dev'));
+app.use('/version', versionRooter);
 app.use('/auth', authRouther);
 app.use('/users', usersRouter);
 app.use('/artists', artistsRouter);
