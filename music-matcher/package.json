@@ -1,6 +1,6 @@
 {
   "name": "music-matcher",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "",
   "main": "src/server.ts",
   "scripts": {
